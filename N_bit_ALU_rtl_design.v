@@ -1,4 +1,4 @@
-module N_bit_ALU_rtl_design #(parameter N = 4)(
+module N_bit_ALU_rtl_design #(parameter N = 4)(             
     input [N-1:0]OPA, OPB,
     input CLK, RST, CE, MODE, CIN,
     input [1:0]INP_VALID,
@@ -11,7 +11,7 @@ module N_bit_ALU_rtl_design #(parameter N = 4)(
     output reg L=0,
     output reg ERR=0);
     
-    reg [N-1:0] OPA_1, OPB_1;       
+    reg [N-1:0] OPA_1, OPB_1;                                
     reg CIN_1;               
     reg [1:0]   INP_VALID_1;         
     reg [N:0] diff;
@@ -26,9 +26,9 @@ module N_bit_ALU_rtl_design #(parameter N = 4)(
     wire is_mul_cmd;
     assign is_mul_cmd = (CMD == 4'b1001 || CMD == 4'b1010);
 
-    always @(posedge CLK)
+    always @(posedge CLK)    
     begin
-        if (RST)  
+        if (RST)        
         begin
             RES <= 0;
             COUT <= 0;
@@ -49,19 +49,18 @@ module N_bit_ALU_rtl_design #(parameter N = 4)(
             op_mode <= 0;
         end
 
-        else if (CE)
-        begin
-            COUT <= 0;
+        else if (CE)               
+        begin                           
+            COUT <= 0;               
             OFLOW <= 0;
             G <= 0;
             E <= 0;
             L <= 0;
-            ERR <= 0;
+            ERR <= 0;                  
 
-            if (op_active)
+            if (op_active)              
             begin
-                op_active <= 0;
-
+                op_active <= 0; 
                 if (op_mode) 
                 begin
                     case (op_cmd)
@@ -100,7 +99,7 @@ module N_bit_ALU_rtl_design #(parameter N = 4)(
                         begin
                             if (INP_VALID_1 == 2'b11)
                             begin
-                                OFLOW <= (OPA_1 < OPB_1) ? 1 : 0;
+                                OFLOW <= (OPA_1 < ({1'b0,OPB_1}+ CIN_1)) ? 1 : 0;
                                 RES <= OPA_1 - OPB_1 - CIN_1;
                             end
                             else ERR <= 1;
@@ -109,39 +108,42 @@ module N_bit_ALU_rtl_design #(parameter N = 4)(
                         4'b0100: 
                         begin
                             if (INP_VALID_1 == 2'b11 || INP_VALID_1 == 2'b01)
-                                RES <= (OPA_1 + 1'b1) & {N{1'b1}};
+                                RES <= OPA_1 + 1'b1;
                             else ERR <= 1;
                         end
 
                         4'b0101: 
                         begin
                             if (INP_VALID_1 == 2'b11 || INP_VALID_1 == 2'b01)
-                                RES <= (OPA_1 - 1'b1) & {N{1'b1}};
+                                RES <= OPA_1 - 1'b1;
                             else ERR <= 1;
                         end
 
                         4'b0110: 
                         begin
                             if (INP_VALID_1 == 2'b11 || INP_VALID_1 == 2'b10)
-                                RES <= (OPB_1 + 1'b1) & {N{1'b1}};
+                                RES <= OPB_1 + 1'b1;
                             else ERR <= 1;
                         end
 
                         4'b0111: 
                         begin
                             if (INP_VALID_1 == 2'b11 || INP_VALID_1 == 2'b10)
-                                RES <= (OPB_1 - 1'b1) & {N{1'b1}};
+                                RES <= OPB_1 - 1'b1;
                             else ERR <= 1;
                         end
 
                         4'b1000: 
                         begin
-                            RES <= {2*N{1'b0}};
+                            RES <= 0;
                             if (INP_VALID_1 == 2'b11)
                             begin
-                                if (OPA_1 == OPB_1)      begin E <= 1; G <= 0; L <= 0; end
-                                else if (OPA_1 > OPB_1)  begin E <= 0; G <= 1; L <= 0; end
-                                else                      begin E <= 0; G <= 0; L <= 1; end
+                                if (OPA_1 == OPB_1)      
+                                begin E <= 1; G <= 0; L <= 0; end
+                                else if (OPA_1 > OPB_1)  
+                                begin E <= 0; G <= 1; L <= 0; end
+                                else                      
+                                begin E <= 0; G <= 0; L <= 1; end
                             end
                             else ERR <= 1;
                         end
@@ -152,8 +154,7 @@ module N_bit_ALU_rtl_design #(parameter N = 4)(
                             begin
                                 sum   = $signed(OPA_1) + $signed(OPB_1);
                                 RES   <= sum[N-1:0];
-                                OFLOW <= (~OPA_1[N-1] & ~OPB_1[N-1] & sum[N-1]) |
-                                          (OPA_1[N-1] &  OPB_1[N-1] & ~sum[N-1]);
+                                OFLOW <= (~OPA_1[N-1] & ~OPB_1[N-1] & sum[N-1]) | (OPA_1[N-1] &  OPB_1[N-1] & ~sum[N-1]);
                                 if ($signed(OPA_1) == $signed(OPB_1))
                                     begin E <= 1; G <= 0; L <= 0; end
                                 else if ($signed(OPA_1) > $signed(OPB_1))
@@ -193,28 +194,28 @@ module N_bit_ALU_rtl_design #(parameter N = 4)(
                        4'b0011: if(INP_VALID_1==2'b11) RES<={1'b0,~(OPA_1|OPB_1)}; else ERR<=1;
                        4'b0100: if(INP_VALID_1==2'b11) RES<={1'b0,OPA_1^OPB_1}; else ERR<=1;
                        4'b0101: if(INP_VALID_1==2'b11) RES<={1'b0,~(OPA_1^OPB_1)}; else ERR<=1;
-                       4'b0110: if(INP_VALID_1==2'b11||INP_VALID_1==2'b01) RES<={1'b0,~OPA_1}; else ERR<=1;
-                       4'b0111: if(INP_VALID_1==2'b11||INP_VALID_1==2'b10) RES<={1'b0,~OPB_1}; else ERR<=1;
-                       4'b1000: if(INP_VALID_1==2'b11||INP_VALID_1==2'b01) RES<={1'b0,OPA_1>>1}; else ERR<=1;
-                       4'b1001: if(INP_VALID_1==2'b11||INP_VALID_1==2'b01) RES<={1'b0,OPA_1<<1}; else ERR<=1;
-                       4'b1010: if(INP_VALID_1==2'b11||INP_VALID_1==2'b10) RES<={1'b0,OPB_1>>1}; else ERR<=1;
-                       4'b1011: if(INP_VALID_1==2'b11||INP_VALID_1==2'b10) RES<={1'b0,OPB_1<<1}; else ERR<=1;
-                       4'b1100: 
+                       4'b0110: if(INP_VALID_1==2'b11||INP_VALID_1==2'b01) RES<=~OPA_1; else ERR<=1;
+                       4'b0111: if(INP_VALID_1==2'b11||INP_VALID_1==2'b10) RES<=~OPB_1; else ERR<=1;
+                       4'b1000: if(INP_VALID_1==2'b11||INP_VALID_1==2'b01) RES<={OPA_1>>1}; else ERR<=1;
+                       4'b1001: if(INP_VALID_1==2'b11||INP_VALID_1==2'b01) RES<={OPA_1<<1}; else ERR<=1;
+                       4'b1010: if(INP_VALID_1==2'b11||INP_VALID_1==2'b10) RES<={OPB_1>>1}; else ERR<=1;
+                       4'b1011: if(INP_VALID_1==2'b11||INP_VALID_1==2'b10) RES<={OPB_1<<1}; else ERR<=1;
+                       4'b1100:
                         begin
                             if (INP_VALID_1 == 2'b11)
                             begin
-                                if (|OPB_1[(N-1):(N/2)]) ERR <= 1;
-                                else RES <= {{N{1'b0}}, (OPA_1 << OPB_1[$clog2(N)-1:0]) | (OPA_1 >> (N - OPB_1[$clog2(N)-1:0]))};
+                                if (|OPB_1[(N-1):(N/2)]) ERR <= 1; 
+                                else 
+                                    RES <= {(OPA_1 << OPB_1[$clog2(N)-1:0]) | (OPA_1 >> (N - OPB_1[$clog2(N)-1:0]))};
                             end
                             else ERR <= 1;
                         end
-
                         4'b1101: 
                         begin
                             if (INP_VALID_1 == 2'b11)
                             begin
                                 if (|OPB_1[(N-1):(N/2)]) ERR <= 1;
-                                else RES <= {{N{1'b0}}, (OPA_1 >> OPB_1[$clog2(N)-1:0]) | (OPA_1 << (N - OPB_1[$clog2(N)-1:0]))};
+                                else RES <= {(OPA_1 >> OPB_1[$clog2(N)-1:0]) | (OPA_1 << (N - OPB_1[$clog2(N)-1:0]))};
                             end
                             else ERR <= 1;
                         end
@@ -282,7 +283,7 @@ module N_bit_ALU_rtl_design #(parameter N = 4)(
                     end
                     else ERR <= 1;
 
-                    default: 
+                    default:
                     begin
                         OPA_1 <= OPA;
                         OPB_1 <= OPB;
@@ -294,14 +295,14 @@ module N_bit_ALU_rtl_design #(parameter N = 4)(
                     end
                 endcase
             end
-            else 
+            else
             begin
-                OPA_1       <= OPA;
-                OPB_1       <= OPB;
+                OPA_1 <= OPA;
+                OPB_1 <= OPB;
                 INP_VALID_1 <= INP_VALID;
-                op_cmd      <= CMD;
-                op_mode     <= 0;
-                op_active   <= 1;
+                op_cmd <= CMD;
+                op_mode <= 0;
+                op_active <= 1;
             end
         end
     end
