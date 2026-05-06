@@ -60,16 +60,21 @@ module N_bit_ALU_rtl_design #(parameter N = 4)(
                 begin
                     mul_active <= 0;
                     mul_cnt <= 0;
-                end
-                else
-                begin
-                    mul_cnt <= mul_cnt + 1;
-                  if (mul_cnt == 1)
-                    begin
-                        RES <= mul_temp;
-                        mul_active <= 0;
-                    end
-                end
+          else
+               begin
+              mul_cnt <= mul_cnt + 1;
+              if (mul_cnt == 0)
+               begin
+        
+                RES <= {2*N{1'bx}};
+               end
+            else if (mul_cnt == 1)
+          begin
+        RES <= mul_temp;
+        mul_active <= 0;
+        mul_cnt <= 0;
+    end
+end
             end
             else if (MODE)
             begin
